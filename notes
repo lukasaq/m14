@@ -1,2 +1,125 @@
 ########## mod 14 lesson 1 ###############
-######### OSINT Techniques ##########
+######### Directory Services ##########
+
+image saved : cyber threat
+image saved : event codes
+image saved : 
+image saved : 
+image saved : 
+image saved : 
+image saved : 
+image saved : 
+image saved : 
+
+
+Key terms in AD DS include:
+• Schema: The set of user-configured rules that govern objects and attributes in AD DS.
+• Global Catalog: The container for all objects in AD DS. For example, a name associated with a user or a computer is stored in the global catalog.
+• Query and Index Mechanism: This system allows users to find each other in AD. A good example would be when typing a name in the mail client, and the mail client shows possible matches.
+• Replication Service: The replication service makes sure that every DC on the network has the same Global Catalog and Schema.
+• Sites: Sites are representations of the network topology, so AD DS knows which objects go together to optimize replication and indexing.
+• Lightweight Directory Access Protocol (LDAP): LDAP is an industry-standard application protocol that allows AD to communicate with other LDAP-enabled directory services across platforms. Example of its use includes creating a centralized management of AD users for validating access to various applications and services.
+Services provided in AD DS include:
+• Domain Services: The collection of software and processes that store information about the enterprise, including users and computers.
+• Certificate Services: Allows the domain controller to serve and authenticate digital certificates, signatures, and public key cryptography.
+• Lightweight Directory Services: The foundation that supports LDAP. LDAP is a vendor-agnostic, industry-standard, protocol used to access and maintain directory information services distributed over an Internet Protocol (IP) network. A common use of LDAP is to provide a central place to store usernames and passwords.
+• Directory Federation Services: Provides Single Sign-On (SSO) authentication for multiple applications in the same session. SSO allows users to only use one set of credentials to log on to multiple applications.
+• Rights Management: The rules and configurations that control information rights and data access policies. The configurations defined using this service will determine which users can access which files, folders, and/or applications.
+
+
+GPO is a collection of Group Policy settings that define what a system looks like and how it behaves for a defined group of users. Every GPO has two parts: a user configuration and a computer configuration. Computer-related policies specify system behavior, application settings, security settings, assigned applications, and computer startup and shutdown scripts.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
