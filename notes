@@ -29,7 +29,15 @@ Services provided in AD DS include:
 
 GPO is a collection of Group Policy settings that define what a system looks like and how it behaves for a defined group of users. Every GPO has two parts: a user configuration and a computer configuration. Computer-related policies specify system behavior, application settings, security settings, assigned applications, and computer startup and shutdown scripts.
 
+Using the Security Onion index, create a data table visualization to show how many occurrences of event ID 5136 are associated with the user name Leonard Blevins.
 
+
+NOTE: The event.code and user.name fields should be used in the visualization. 
+
+The next step in the investigation needs to dive into the data of the 25 occurrences of event ID 5136. The goal is to determine which accounts, if any, were affected by Leonard Blevins. 
+
+
+To determine the accounts that experienced modifications, adjust the current visualization. Aggregate based on the field winlog.event_data.ObjectDN.keyword.
 
 
 
