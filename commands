@@ -1,2 +1,124 @@
 ########## mod 14 lesson 1 ###############
-######### OSINT Techniques ##########
+######### Directory Services ##########
+
+enforced audit use auditpol
+
+accesschk "domain\user" -a * -> priveledge
+auditpol.exe /get /category:* -> enforced
+GPM -> name of gpo
+LSP -> local
+RSOP.MSC -> using rsop
+
+powershell
+
+get-service
+Get-Service | Where-Object {$_.status -eq ”Running”}
+
+
+
+. In Command Prompt, enter:
+
+
+C:\windows\system32>gpupdate /force
+
+To quickly assess the policies that are defined and being enforced, within the Command Prompt (Admin) enter the following command:
+
+
+C:\windows\system32>auditpol /get /category:*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
