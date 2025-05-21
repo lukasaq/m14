@@ -101,32 +101,278 @@ Train users to recognize and avoid bad linksEnforce a least privilege modelLimit
 Install endpoint protection to block attackers from loading modules like MimikatzCreate a choke point for access to the DCs, adding another layer of protectionCreate a terminal server that can only talk to the DCsConfigure the DCs to only accept administrative connections from that terminal serverMonitor file activity and user behaviorAlert on known behavior that indicates Golden Ticket attacks
 
 
+########## mod 15 lesson 1 ###############
+######### Rights Management ##########
+
+image saved : miter chart
+image saved : windows event codes
+image saved : user event codes
+image saved : user changes codes
+image saved : user event code 2
+image saved : actions preformed
+image saved : 
+
+Access Right Implementation
+
+
+A system keeps track of a Discretionary Access Control List (DACL) for each securable object present on that system. Each DACL contains a list of Access Control Entries (ACE), which each tie a list of access rights that a trustee (i.e., a user, group, or specific logon session) has to a securable object. An ACE can be one of six types — three of these types are supported by all securable objects:
+Access-allowed ACEs: Grant a trustee the set of access rights specified within the ACE
+Access-denied ACEs: Deny a trustee the set of access rights specified within the ACE
+System-audit ACEs: Used to audit a trustee’s attempts to exercise any of the access rights specified within the ACE
+
+
+
+
+
+Privileged Accounts
+Basic user accounts: Accounts used by the general population of network users. These accounts usually require less privileges as they are generally used for basic job functions.Privileged accounts: Accounts with specific elevated rights that grant them access to information and resources, or the ability to administer changes. Listed below are some examples of what privileged accounts could be commissioned for:An account for a healthcare employee that grants access to specific resources that contain Personally Identifiable Information (PII) required for them to execute their job function. Additionally, this account may provide access to an application or service that helps the employee manage and interact with that data.A local administrator account used by an IT employee to make changes to a local system, but not to the wider network or domain.A domain administrator account allowing an administrator to modify information within, and make configuration changes to, an AD domain. These actions might include the commission and decommission of new users, the ability to modify user and group permissions, or the addition, removal, or modification of any object within the domain. Generally, domain administrator accounts are also granted a high level of privileges on individual endpoints within that domain.An enterprise-level administrator account made for an administrator to manage all trees, domains, and Organizational Units (OU) within the AD forest. 
+Shared accounts: Accounts shared by two or more users. These accounts are not recommended and should be generally prohibited, since they present many challenges when auditing user activity and providing attribution for actions. If shared accounts are required, it is highly recommended that the privileges provided to these accounts follow the Principle of Least Privilege in order to reduce the risk and impact of malicious use. Service accounts: Accounts associated with an application or service in order to provide a security context for that service to run under. It is common for service accounts to have elevated privileges, making them a juicy target for threat actors. A good method of identifying MCA performed by service accounts is to confirm that service accounts have no interactive sessions associated with them and few child processes.
+
+
+Generally, it is recommended that high-privileged accounts be separate from everyday user accounts, and that the high-privileged accounts only be used when these privileges are necessary to perform an essential job function. Using the John Doe user as an example, best practice implementation would mean they would have a jdoe@cda.corp account for every day, non-privileged use, and a separate jdoe.admin@cda.corp (or similar convention) for required elevated privileges in order to perform essential actions. Monitoring for suspicious activity that occurs on these high-privileged accounts is made easy, because the accounts should only be used for a small amount of essential activity — any activity that oversteps these bounds should be considered suspicious. 
+
+
+Managing Passwords
+
+
+Password management is still a popular concept when discussing security. Accounts — especially high-privileged ones — should have strong passwords and have Two-Factor Authentication (2FA) enabled when possible. Unfortunately, service accounts and other legacy accounts still remain that cannot utilize 2FA. Additional issues that may increase an organization’s password compromise risk might be multi-use systems and users being resistant or hesitant to change.
+
+
+Decommissioning Accounts
+
+
+Deleting or disabling accounts that are no longer necessary is an often overlooked function within the realm of account management. There are several considerations that must be made when deciding whether to delete or disable an account. Disabling an account can have far less negative impact on an investigation, because deletion may remove important data and event logs associated with that account. Similarly, account deletion may cause a huge headache if there are any downstream resources that rely on that account to be present — an account can be easily re-enabled, but restoring a deleted account is much more difficult. However, deleting accounts leads to a much cleaner directory, and allows for easier management of the directory in the future. One way an organization might choose to balance these considerations is via the creation of an account deletion policy — any accounts that are no longer needed must be disabled, then an appropriate amount of time must pass before deletion.
+
+
+Accounts that are members of the Protected Users group that authenticate to a Windows Server 2012 R2 domain are unable to:
+Authenticate with New Technology Local Area Network (LAN) Manager (NTLM) authentication.Use Data Encryption Standard (DES) or Rivest Cipher 4 (RC4) encryption types in Kerberos pre-authentication.Be delegated with unconstrained or constrained delegation.Renew the Kerberos Ticket-Granting Tickets (TGT) beyond the initial four-hour lifetime.
+
+
+When discussing the security of groups, it is important to understand the difference between local and domain groups and the concept of group scope. As discussed earlier, an AD group can be a local group or a domain group. Local groups are groups that are specific to the particular system that the group was created on, while domain groups are groups that can apply to a larger AD environment. Note that membership in a local group can include domain users and groups, if the system is joined to a Windows domain. For example, an organization’s IT accounts might be added to the local Administrators group on each endpoint, in order to facilitate quick IT management and administration of that endpoint.
+
+
+Group Scope
+
+
+A group’s group scope defines the possible members of that group, and the location within an AD forest where permissions associated with that group are applicable. There are three possible group scopes.
+
+
+Domain Local group: Only grants permissions within the same domain as it is defined in. These permissions do not apply to other domains within the tree or larger forest. It is important to note that membership within a Domain Local group is not very restricted — any user, global group, or universal group from within the forest can be a member of a Domain Local group. The only restriction is that a Domain Local group cannot be a member of another Domain Local group within a different domain.
+
+
+Global group: Grants permissions over any domain within the AD forest. Membership for these Global groups can consist of accounts and other Global groups from the same domain.
+
+
+Universal group: Grants permissions across the entirety of the AD forest. Members of a Universal group can consist of any user account, Global group, or Universal group within the forest.
+
+
+Ultimately, group scopes exist to enable AD administrators to grant permissions in an efficient way. However, group scopes can be used by Defensive Cyber Operators to more accurately assess and investigate security issues with an AD domain. Misconfigurations of these group scopes within an AD forest could allow an attacker to gain unintended access to other resources within the forest.
+
+
+Auditing AD Activity
+Proper collection and monitoring of audit logs produced within an AD environment can be a key contributor to the security of an organization. Review the following types of AD auditing to better understand the importance of performing these crucial audits.
+
+﻿
+
+Usage Auditing
+﻿
+
+In the case of a breach, account usage auditing can drastically reduce the time required to determine what attacker actions have taken place. It is important to be able to monitor which accounts are accessing and modifying objects within the enterprise. Monitoring this behavior can help provide context regarding whether the account is being used in accordance with security policy and is being leveraged for legitimate use. 
+
+﻿
+
+Privilege Auditing
+﻿
+
+Continuous auditing of privileges available throughout the environment can ensure that privileges that are no longer needed are removed. This includes updating privileges as usage requirements change, and removing accounts for users or services that are no longer necessary to the organization. This is one of the most important aspects of maintaining the Principle of Least Privilege.
+
+﻿
+
+Change Auditing
+﻿
+
+Proper auditing of the changes made to an account — and deployment of alerts around any highly impactful changes — allows local defenders to quickly identify and respond to potential MCA from internal and external threats. This is important, as threats often manipulate account permissions as part of privilege escalation, discovery, lateral movement, and persistence activities. 
+
+﻿
+
+The events used to perform AD audits exist in many different places within an AD environment. Events are generated on Windows workstations, Windows servers, or directly on AD infrastructure such as DCs. These events can be collected and aggregated into a centralized source, such as a Security Information and Event Management (SIEM) instance. Investigation of these events can provide insight into the activity that occurred within an environment.
+
+
+Perform an investigation into various AD audit logs. During the investigation, AD-related audit logs are used to determine what actions were performed within the environment, and if they can be attributed to MCA.
+
+
+Table 15.1-4 provides a list of AD-related Windows event logs and corresponding descriptions that might be useful during the investigation. You have already encountered some of these events earlier in this course. As you read through the following AD-related event types, think about how each might be used to identify MCA occurring within an environment.
+
+
+
+The following query is the most suitable for investigating process execution events where the Administrator account has executed net commands:
+
+
+event.code:4688 AND user.name:Administrator AND winlog.event_data.CommandLine:"net *”
+
+
+
+This query looks for Windows 4688 Process Execution events. (Sysmon 1 events might also have been used to accomplish this.) The query also looks for a user.name of Administrator to ensure that the scope of the investigation is limited to the suspect account. Searching for winlog.event_data.CommandLine values containing net * returns all variations of the net command that could have occurred, thanks to the wildcard operator (*). Since this is one of the first searches being performed during the investigation, it is not clear yet which suspicious net commands were executed, so looking for any and all net commands by using a wildcard search is preferred. The other searches listed as possible answers were either incorrect, or did not limit the search to only the Administrator account.
+
+
+Execute the following query in Kibana:
+
+
+event.code:4688 AND user.name:Administrator AND winlog.event_data.CommandLine:"net *"
+
+
+
+
+If you are unfamiliar with the schema of the Windows events, an anonymous search — also known as a fieldless search — can be performed in order to search for any reference to the marco.inaros user account. This can be done for the required events by using the following query:
+
+
+marco.inaros AND (event.code:4720 OR event.code:4722 OR event.code:4724 OR event.code:4738)
+
+
+
+Additional digging within the results shows that the winlog.event_data.TargetUserName field is populated with the value marco.inaros for all four event IDs.
+
+
+
+
+
+Figure 15.1-37
+
+
+A more efficient search can now specify this field. A final version of the query is below:
+
+
+winlog.event_data.TargetUserName:"marco.inaros" AND (event.code:4720 OR event.code:4722 OR event.code:4724 OR event.code:4738)
+
+
+
+It is now known if the marco.inaros account was successfully created within the domain. The creation of the account alone may not facilitate the needs of an attacker — additional elevated privileges may also be assigned by the attacker. This can be accomplished via the addition of the new account to one or more groups. In fact, astute observers might have recognized another suspicious Windows 4688 event had occurred just after the marco.inaros account was initially added:
+
+
+
+
+
+Figure 15.1-38
+
+
+The command indicated in Figure 15.1-38 adds the newly created user to the Enterprise Admins group. If this succeeded, the attacker effectively has full control over the domain — Enterprise Admins have incredibly high privileges.
+
+Based on Table 15.1-7 — and information provided earlier in this lesson — it is possible to determine the events that would have been generated as a result of the marco.inaros account being added to the Enterprise Admins group. 
+
+
+Recall that the Enterprise Admins group is a Universal group. This limits the possible correct answers to 4754, 4755, and 4756 events. Because 4754 events are for the creation of a Universal group, and the Enterprise Admins group exists by default within an AD forest, 4754 events are also not a correct answer. Because the marco.inaros account was added to the Enterprise Admins group, a 4756 event would have been generated. Since the addition of a new user to a group also constitutes a change to that group, a parallel 4755 event was generated, as well.
+
+
+It is possible to use Kibana to identify which of the listed events were generated by using the following query:
+
+
+(marco.inaros OR "Enterprise Admins") AND (event.code:4728 OR event.code:4732 OR event.code:4735 OR event.code:4737 OR event.code:4754 OR event.code:4755 OR event.code:4756)
 
 
 
 
 
 
+Figure 15.1-39
+
+
+The first part of the query contains two anonymous searches for any event containing the string marco.inaros OR “Enterprise Admins”. In this case, an anonymous search for marco.inaros would not have been enough — 4755 events do not contain any additional information on the change that occurred.
+
+
+Now that it has been confirmed that the suspicious marco.inaros account was successfully added to the Enterprise Admins group, the investigation needs to pivot. It is now of the utmost importance to identify what actions were taken by the marco.inaros account. Determining if and when the account was used to log into the domain would serve as a good starting point for this investigation.
+
+
+Search to determine what time the marco.inaros account first logged into the CDA domain.
+
+
+Identifying Assigned Privileges
+The marco.inaros account first logged into the CDA domain at 17:38:38.998 on June 4. This was accomplished via the following query, which searches against Windows 4624 events.
+
+﻿
+
+event.code:4624 AND winlog.event_data.TargetUserName:marco.inaros
+﻿
+
+﻿
+
+Figure 15.1-40
+
+﻿
+
+Recall that Windows 4624 events are generated when a successful logon occurs, so these events are the best starting point for the investigation into activity performed by the marco.inaros account.
+
+﻿
+
+Recall that the term privilege has a more specific meaning when referring to individual Windows OSs — a privilege is a permission that is assigned to an account in order to allow it to perform system-level operations on an individual computer.
+
+﻿
+
+Determining if any special privileges were assigned to a user at login could help provide context for the intent of the user. Windows 4672 events are generated whenever special privileges are assigned to a new logon session. 
+
+﻿
+
+Create a query that returns 4672 events for the marco.inaros account, and identify the special privileges assigned to the account when it first logged in.
+
+
+Determining the list of privileges assigned to an account can be achieved with the following query:
+
+
+marco.inaros AND event.code:4672
+
+
+
+In this case, two 4672 events were generated — one for each successful logon — and both showed the same list of privileges within the winlog.event_data.PrivilegeList field.
+
+
+
+
+
+Figure 15.1-41
+
+
+As expected for an account in the Enterprise Admins group, a list of extremely dangerous privileges were applied, such as SeTakeOwnershipPrivilege and SeDebugPrivilege.
+
+
+Using the knowledge gained so far, determine which command was executed by the marco.inaros account.
+
+
+Windows 4688 events can be used to determine the commands executed by the marco.inaros account using the following query:
+
+
+user.name:marco.inaros AND event.code:4688
+
+
+
+Two events were returned by the query. In this case, an anonymous search could not be used. The query marco.inaros AND event.code:4688 incorrectly returns commands that were executed by the Administrator user!
+
+
+
+
+
+Figure 15.1-42
+
+
+Luckily, it seems like the attacker was simply testing out whether the marco.inaros account was successfully created — no additional MCA was performed using this account.
+
+
+When performing scoping activities during an investigation, the goal is to determine the breadth of attacker actions that occurred within an environment. Time is an especially important factor in relation to the first and last occurrences of MCA in an environment — knowing the first attacker action that took place is incredibly important, but so is determining the most recent known attacker action.
+
+
+
+Using the same pattern employed in the rest of the exercise, the following query can identify the related Windows 4634 events:
+
+
+event.code:4634 AND marco.inaros
 
 
 
 
 
 
+Figure 15.1-43
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+A non-anonymous search would have needed to rely on the winlog.event_data.TargetUserName field. This is because Windows 4634 events are generated outside of the security context of the account being logged out — the user.name field that was used to attribute the event back to a username in some earlier queries does not contain a username for 4634 events.
 
 
 
