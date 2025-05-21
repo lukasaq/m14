@@ -41,21 +41,180 @@ lsadump::dcsync /domain:cda.corp /user:krbtgt
 kerberos::golden /domain:cda.corp /sid:S-1-5-21-5840559-2756745051-1363507867 /krbtgt:1b8cee51fd49e55e8c9c9004a4acc159 /user:Administrator /id:502 /ptt
 
 
+########## mod 15 lesson 1 ###############
+######### Rights Management ##########
+
+command line
+. Execute the following commands while observing the specific output:
+
+
+C:\windows\system32>net user
+
+Figure 15.1-12
+
+
+This net command outputs a list of local user accounts found on the machine. These accounts may exist within the domain, but must have a local profile on the current machine in order to be visible
+
+
+3. Enter the following command:
+
+
+C:\windows\system32>net user /domain
+
+
+Figure 15.1-13
+
+
+This net command provides an output of all the users for the currently joined domain. The /domain switch is a common addition used within net commands to retrieve results from the currently joined domain, rather than just the local computer.
+
+
+4. Enter the following command:
+
+
+C:\windows\system32>net user Administrator /domain
+
+Figure 15.1-14
+
+
+This command returns information about the specified user — Administrator — from the domain. Some of the important information returned includes Password last set date, Last logon date, and Global Group memberships. 
+
+
+5. Enter the following command:
+
+
+C:\windows\system32>net localgroup
+
+Figure 15.1-15
+
+
+This net command provides an output of all the local groups for the current system.
+
+
+6. Enter the following command:
+
+
+C:\windows\system32>net group /domain
+
+Figure 15.1-16
+
+
+This net command provides an output of all the domain groups for the current domain.
+
+
+7. Enter the following command:
+
+
+C:\windows\system32>net group "Domain Admins" /domain
+
+
+Figure 15.1-17
+
+
+This command returns an output for the specified group — Domain Admins. The output includes a list of users that are part of the specific group.
+
+
+powershell-------------------------------------------------------
+
+Enter the following command:
+
+
+PS C:\Users\trainee> Get-ADUser -Filter *
+
+Figure 15.1-18
+
+
+This Get-ADUser command provides an output of all users in the current domain by filtering for users matching the wildcard operator (*). Unlike its counterpart net commands, the output of Get-ADUser provides some notable information attributes related to each user. Some important attributes that can be utilized later during an investigation are the Security Identifier (SID), DistinguishedName, Enabled status, and Object Globally Unique Identifier (ObjectGUID). 
+
+
+3. Enter the following command:
+
+
+PS C:\Users\trainee> Get-ADUser jdoe -Properties *
+
+Figure 15.1-19
+
+
+This version of the command returns an output for a specific user — jdoe. Adding the -Properties switch displays a robust list of associated properties — much more than the corresponding net command. Some notable attributes returned from the output of the command are adminCount, Created, LastLogonDate, Modified, and PasswordLastSet. 
+
+
+4. Enter the following command:
+
+
+PS C:\Users\trainee> Get-ADGroup -filter *
+
+Figure 15.1-20
+
+
+This Get-ADGroup command provides an output of all groups for the current domain, again filtering for the wildcard operator to list all groups within the domain. Notable attributes that can be leveraged during an investigation are DistinquishedName, GroupCategory, ObjectGUID, and SID. 
+
+
+5. Enter the following command:
+
+
+PS C:\Users\trainee> Get-ADGroupMember -identity "Domain Users"
+
+Figure 15.1-21
+
+
+This Get-ADGroup command lists all members of a group specified via the -Identity switch — Domain Users in this case.
+
+
+6. Enter the following command:
+
+
+PS C:\Users\trainee> Get-ADGroupMember -Identity Administrators | Select-Object name, objectClass, distinguishedName
+
+Figure 15.1-22
+
+
+This command queries for members of the Administrators group. As with many other PowerShell commands, output can be piped into the Select-Object command to control the output by listing only the selected properties in a specified order.
+
+
+7. Enter the following command. This is the same command executed during the last step, but with an additional pipe into the Export-CSV command to store the results in a file.
+
+
+PS C:\Users\trainee> Get-ADGroupMember -Identity 'Domain Admins' | Select-Object name, objectClass, distinguishedName | Export-CSV -Path “DomainAdminGroupMembers.csv”
 
 
 
+8. Enter the following command to review the output file of the previous step:
+
+
+PS C:\Users\trainee> type .\DomainAdminGroupMembers.csv
+
+Figure 15.1-23
+
+
+Outputting the results of an AD query to a file provides the ability to use, analyze, or reference the information again in the future.
 
 
 
+kibana filters
 
+The following query is the most suitable for investigating process execution events where the Administrator account has executed net commands:
 
+event.code:4688 AND user.name:Administrator AND winlog.event_data.CommandLine:"net *”
 
+If you are unfamiliar with the schema of the Windows events, an anonymous search — also known as a fieldless search — can be performed in order to search for any reference to the marco.inaros user account. This can be done for the required events by using the following query:
+marco.inaros AND (event.code:4720 OR event.code:4722 OR event.code:4724 OR event.code:4738)
 
+A more efficient search can now specify this field. A final version of the query is below:
+winlog.event_data.TargetUserName:"marco.inaros" AND (event.code:4720 OR event.code:4722 OR event.code:4724 OR event.code:4738)
 
+It is possible to use Kibana to identify which of the listed events were generated by using the following query:
+(marco.inaros OR "Enterprise Admins") AND (event.code:4728 OR event.code:4732 OR event.code:4735 OR event.code:4737 OR event.code:4754 OR event.code:4755 OR event.code:4756)
 
+The marco.inaros account first logged into the CDA domain at 17:38:38.998 on June 4. This was accomplished via the following query, which searches against Windows 4624 events.
+event.code:4624 AND winlog.event_data.TargetUserName:marco.inaros
 
+Determining the list of privileges assigned to an account can be achieved with the following query:
+marco.inaros AND event.code:4672
 
+Windows 4688 events can be used to determine the commands executed by the marco.inaros account using the following query:
+user.name:marco.inaros AND event.code:4688
 
+Using the same pattern employed in the rest of the exercise, the following query can identify the related Windows 4634 events:
+event.code:4634 AND marco.inaros
 
 
 
