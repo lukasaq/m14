@@ -375,42 +375,414 @@ Figure 15.1-43
 A non-anonymous search would have needed to rely on the winlog.event_data.TargetUserName field. This is because Windows 4634 events are generated outside of the security context of the account being logged out — the user.name field that was used to attribute the event back to a username in some earlier queries does not contain a username for 4634 events.
 
 
+########## mod 15 lesson 2 ###############
+######### Windows Authenticationt ##########
+
+SSO is an authentication protocol that enables users to securely access multiple applications, systems, and services using only one set of credentials. Users may require access to multiple applications, from different vendors, throughout their average workday. With SSO in place, users do not need a unique username and password for each unique application. 
+
+The Seven Laws of Identity 
+
+
+Kim Cameron, Microsoft's Architect of Identity, developed seven Laws of Identity. The seven laws that federated identity systems are built upon and bound by include:
+
+
+1. User Control and Consent: Digital identity systems must only reveal information identifying a user with the user's consent.
+
+
+2. Limited Disclosure for Limited Use: The solution that discloses the least identifying information and best limits its use is the most stable, long-term solution.
+
+
+3. The Law of Fewest Parties: Digital identity systems must limit disclosure of identifying information to parties having a necessary and justifiable place in a given identity relationship.
+
+
+4. Directed Identity: A universal identity metasystem must support both omnidirectional identifiers for use by public entities and unidirectional identifiers for private entities, thus facilitating discovery while preventing unnecessary release of correlation handles.
+
+
+5. Pluralism of Operators and Technologies: A universal identity metasystem must channel and enable the interworkings of multiple identity technologies run by multiple identity providers.
+
+
+6. Human Integration: A unifying identity metasystem must define the human user as a component integrated through protected and unambiguous human-machine communications.
+
+
+7. Consistent Experience Across Contexts: A unifying identity metasystem must provide a simple consistent experience while enabling separation of contexts through multiple operators and technologies.
+
+
+NOTE: A metasystem is a system comprised of small systems connected together.
+
+
+Active Directory Federation Services (AD FS) is a Microsoft software component that runs on Windows Server OSs. AD FS provides users with SSO access to systems and applications. AD FS enables federated identity and access management by securely sharing digital identity and entitlements rights across security and enterprise boundaries.
+
+
+This can be accomplished across those boundaries through the following process:
+
+
+1. A user makes a request for a resource in the AD FS environment.
+
+
+2. An organization server responsible for identity validation verifies the user through the authentication methods configured for that AD FS environment, such as the protocols described later in this lesson.
+
+
+3. The server issues a token containing a progression of data about the client including its identity. 
+
+
+4. On the resources side of the environment, another organization server approves the identity token.
+
+
+5. The second server issues another token for the area servers to acknowledge the personality. This enables a framework to give controlled access to its assets or administration to a user that resides with another security domain without requiring the user to verify legitimately to the framework and without the two frameworks sharing a database of user identities or passwords.
+
+
+6. The token for access to AD FS servers is employed by the user without the need to continue to verify the user’s identity.
+
+
+
+AD FS Security Protocols 
+
+
+AD FS and its relationship with SSO makes it a critical asset for DCO. Access to the Domain Controller (DC) and AD FS should remain to a minimum. Below are security protocols and best practices to secure an AD FS deployment:
+Ensure only domain administrators have rights to access the AD FS.Keep the administrators group to a minimum number of users on AD FS servers.Enforce Multi-Factor Authentication (MFA).Place AD FS server computer objects in a top-level Operational Unit (OU) that does not host other servers.All Group Policy Objects (GPO) that apply to AD FS servers should only apply to them and not other servers as well. This limits potential privilege escalation through GPO modification.Configure security logging to the highest and most detailed level; this does not include the AD FS Trace Log. Send the Security Logs for AD FS — Applications and Services Log → AD FS → Admin — to a Security Information and Event Management (SIEM) to correlate with AD.
+
+
+Windows Authentication hashing methods includes: 
+LM: LAN Manager NT-Hash: New Technology (NT) Hash, known popularly as NT LAN Manager (NTLM). 
+Unfortunately, the acronym NTLM is used ubiquitously throughout the security community while interchangeably referring to either the password hashing algorithm, the deprecated network authentication protocol, and the newer authentication protocol. In this lesson, to remove ambiguity, these are respectively referenced by the terms NT-Hash, Net-NTLMv1, and Net-NTLMv2.
+
+
+NOTE: This means that NT-Hash only refers to how windows systems represent user passwords on disk and in memory, and Net-NTLMv1 or Net-NTLMv2 only refer to the challenge-response network protocols used by one system to authenticate to another.
+
+
+Cryptography Vocabulary
+Hashing algorithm: A deterministic one-way function that ingests data (e.g., a message of any length) and outputs a fixed-length value that cannot be reversed into the original content. The output value is commonly referred to as a hash or message digest. A message always has the same hash as long as its contents have not changed.Salt: A random string (e.g., 1F3E1147AD7) that is appended to a message prior to being hashed and is saved afterward for future hashing verification. Salting a hash increases the level of complexity for an attacker to decrypt the hash into a cleartext password, and removes their ability to use rainbow tables for cracking.Encryption: A process that uses keys and a mathematical algorithm to convert human- or machine-readable data to an unreadable format, known as a ciphertext. The ciphertext can only be reversed or decrypted with the keys that were used to encrypt it. Symmetric Key Cryptography: A method of encryption that uses the same key to both encrypt and decrypt messages. Asymmetric  Key Cryptography: A method of encryption that employs the mathematical difficulty of factoring very large prime numbers to use two different — but complementary — key pairs for encryption and decryption between parties.Hash-based Message Authentication Code (HMAC): HMAC is a cryptographic technique that uses a pre-shared key, also known as a secret, and a defined hashing algorithm to create a well-padded, double-hashed hash.HMAC-MD5: Hash-based message authentication code using Message Digest (MD) 5 as the hashing algorithm.Rainbow tables: Large data structures used by attackers that contain a map of pre-computed hashes to the cleartext passwords used to generate them. They are often used by attackers for their effectiveness and low time to identify the cleartext password.
+
+
+Windows Password Hashing | LM
+The LM hash is the oldest password storage mechanism used by Windows, dating back to an OS first deployed in the 1980s. Due to the limited character set allowed at the time, the hashes — created by the algorithm — are fairly easy to crack with modern computing systems. LM is turned off by default starting in Windows Vista/Server 2008. LM hashes are obtained from the Security Account Manager (SAM) database on legacy Windows systems or a DC’s NT Directory Services (NTDS) database.
+
+﻿
+
+The principal weaknesses of the LM hashing algorithm are the limited character sets reducing complexity, the ease of cracking short passwords due to null-byte padding, and the usage of a publicly-deprecated encryption protocol known as Data Encryption Standard (DES).
+
+﻿
+
+With modern computing power, the relatively small key size in implementations of DES encryption led data encrypted with it to be exposed in a matter of hours or days. This impacted not only LM hashes but also Net-NTLMv1, which is discussed later.
+
+﻿
+
+The LM Hashing Algorithm
+
+
+1. Convert all lower case to upper case
+2. Pad password to 14 characters with NULL characters
+3. Split the password to two 7-character chunks
+4. Create two DES keys from each 7-character chunk
+5. DES encrypt the string "KGS!@#$%" with these two chunks
+6. Concatenate the two DES encrypted strings. This is the LM hash.
 
 
 
 
+An example of this algorithm in action is the following:
+
+
+1. A user chooses the password PassWord.
+
+
+2. All characters in the string are converted to uppercase:
+
+
+PassWord → PASSWORD
+
+
+3. If the password is less than 14 characters in length, the algorithm pads it with null characters:
+
+
+PASSWORD → PASSWORD000000
+
+
+4. These 14 characters are split into two halves:
+
+
+PASSWORD000000 → PASSWOR  D000000
+
+
+5. Each 7-byte half is used to generate a 64-bit DES key with a parity bit (0) inserted after every seven bits:
+
+
+1101000011 → 11010000011…
+
+
+6. Each key is then used to encrypt the string KGS!@#$% using the DES algorithm in Electronic Codebook (ECB) mode:
+
+
+PASSWOR → E52CAC67419A9A22
+
+
+D000000 → 4A3B108F3FA6CB6D
+
+
+7. These two halves are combined to form the final LM hash:
+
+
+E52CAC67419A9A224A3B108F3FA6CB6D
+
+
+Weaknesses
+
+
+LM hashing is a very weak cryptographic algorithm due to its age, and is riddled with flaws by using heavily constrained inputs and outputs.
+
+
+For example, due to how the algorithm changes all characters to uppercase, the hashes of the following passwords all have the same hash:
+Password1pAssword1PASSWORD1PassWord1
+Even in a longer password like passwordpass123, the upper and lowercase combinations are more than 32,000 permutations, but they all have the same hash.
+
+
+This algorithm only accepts the 95 American Standard Code for Information Interchange (ASCII) characters, with only 69 possibilities per character after eliminating the entire lowercase alphabet, which leads to only 7.5 trillion possible permutations for each half instead of the 69^14 for the whole 14 characters, since splitting the password in half lets an attacker brute-force seven characters rather than all of them.
+
+
+Rainbow tables already exist containing all these possibilities. Rainbow tables are large data structures that map pre-computed hashes to the passwords used to generate them, and are normally processed with a system's Graphics Processing Unit (GPU) to reduce the resources used by the Central Processing Unit (CPU). This allows for significantly faster cracking on unsalted passwords since it requires only a lookup from a table rather than hashing the passwords on an entire wordlist and comparing each one.
+
+
+If the password is seven characters or less, the second half of the encrypted string is AAD3B435B51404EE — the string KGS!@#$% encrypted with all zeroes. This cuts the total time to cracking the hash in half and is easily identifiable by an attacker.
+
+
+In retrospect, the LM hashing algorithm was created on the assumption that no one would either reverse it or infiltrate the internal network to be in a position to capture it. 
+
+Windows Password Hashing | NT-Hash
+This hashing algorithm is the way passwords are stored on modern Windows systems, and those hashes can be obtained by threat actors by dumping the SAM/NTDS database, or using a tool for reading the hashes out of lsass.exe process memory, such as Mimikatz. These are the hashes used in the Pass-the-Hack (PtH) attack. A domain/standalone workstation could be exploited if vulnerable to such an attack. This is commonly called the NTLM hash, but Microsoft refers to this as the NTHash.
+
+﻿
+he NT-Hash Algorithm
+
+
+MD4(UTF-16-LE(password))
 
 
 
+The NT-Hash algorithm is relatively straightforward and uses the following process:
+
+
+1. A user's password is converted to 16-byte (128-bit) little-endian Unicode Transformation Format (UTF) (UTF-16-LE).
+
+
+2. The MD4 hashing algorithm is used to convert the Unicode password to an NT-Hash.
+
+
+NOTE: The PtH technique can still be abused with the NT-Hash even if a threat actor fails to crack it.
+
+ince a salt is not used while generating the hash, the NT-Hash can be cracked by using either pre-generated rainbow tables or a password cracking tool (e.g., hashcat or John the Ripper). Password cracking tools progressively brute-force a password sequentially or using a supplied wordlist, and leverage the associated hashing algorithm to identify the cleartext password. This attack can be made easier by scraping language from company websites, employee social media profiles, etc., in the wordlists that are used by these tools.
+
+
+The MD4 algorithm employed in this method is defined in the document Request for Comments (RFC) 1320: rfc1320 
+
+
+Windows Authentication Protocols | Introduction
+Windows authentication protocols include LM, Net-NTLMv1, Net-NTLMv2, and Kerberos. 
+
+﻿
+
+Windows AD authentication protocols authenticate users, computers, and services in AD, and authorize the user and/or service to access requested resources.
+
+﻿
+
+LM is among the oldest authentication protocols used by Microsoft. However, its hashes were relatively easy to crack. By capturing hashes and cracking them to obtain account logon credentials, attackers could easily authenticate to other systems on the domain. Net-NTLMv1, which succeeded LM, is an encrypted challenge/response-based authentication protocol used for network logons by client devices, but its implementation is flawed and can be easily exploited by an attacker. Net-NTLMv2 was a significant improvement compared to Net-NTLMv1 in terms of both authentication and session security mechanisms. It enhanced the security of Net-NTLMv1 by adding the ability for a server to authenticate to a client, but remains vulnerable due to the ability of a third-party attacker to intercept and relay the challenge/response.
+
+﻿
+
+Kerberos authentication is a vast improvement over the previous technologies. Kerberos provides identity authentication by exchanging messages between the client, authentication server, and application server. Compared to Net-NTLMv2, Kerberos’s use of strong cryptography and third-party ticket authorization makes it much more difficult for threat actors to infiltrate the network, which provides an additional layer of security.
+
+﻿
+
+The Net-NTLMv2 protocol is not recommended for use in an AD environment, and any applications still employing it for authentication should have that feature deprecated where possible. This may not be feasible in all environments, and where those exceptions exist, increased security controls should be deployed in order to mitigate any possible risks of exploitation, as described in Microsoft Information Technology (IT) Documentation.
+
+Symmetric Key Cryptography: A method of encryption that uses the same key to both encrypt and decrypt messages. 
+
+Asymmetric  Key Cryptography: A method of encryption that employs the mathematical difficulty of factoring very large prime numbers to use two different — but complementary — key pairs for encryption and decryption between parties.
+
+
+Kerberos should be required for authentication in AD, and clearly operate at higher security levels than LM, Net-NTLMv1, and Net-NTLMv2, which present significant cybersecurity risks for enterprises.
+
+
+Official Microsoft guidance regarding authentication mechanisms in AD environments is to disable Net-NTLM authentication over the network:
+
+
+NTLM and NTLMv2 authentication is vulnerable to a variety of malicious attacks, including Server Message Block (SMB) replay, Man-in-the-Middle attacks, and brute force attacks. Reducing and eliminating NTLM authentication from your environment forces the Windows operating system to use more secure protocols, such as the Kerberos version 5 protocol, or different authentication mechanisms, such as smart cards.
+
+
+Windows Authentication Network Protocols | Net-NTLMv1
+The Net-NTLMv1 protocol employs the NT-Hash in a challenge/response between a server and a client to avoid sending a user’s hash over the network. The original version of the protocol uses both the NT and LM hash, depending on the domain’s configuration and available dialects. 
+
+﻿
+
+Net-NTLMv1 is deprecated and not typically used by default,  but it may still be found in some old versions of Windows, if present on a network.
+
+﻿
+The Authentication Process
+
+
+1. The client initiates protocol-specific negotiations before authentication. If the protocol for the resource the client is authenticating to is SMB, then the first exchange consists of the SMB_COM_NEGOTIATE request and response messages. The client sends its supported dialects and the server responds with the highest possible dialect. 
+
+
+2. The client initiates the Net-NTLMv1 protocol negotiation, and includes its hostname and domain, where applicable. This message is normally embedded inside a protocol setup request, such as SMB_COM_SESSION_SETUP_ANDX or SMB_COM_SESSION_SETUP.
+
+
+3. In response, the server generates a random 8-byte challenge and sends it back to the client. This challenge message is contained in a session setup response message.
+
+
+4. The client uses the hash of the user’s password to encrypt the challenge received from the server and returns the response — the 24-byte Net-NTLMv1 proof string — back to the server using another session setup request message.
+
+
+5. The server sends the username, challenge, and client response to the DC to verify that the requesting user is authorized to authenticate to the domain resource.
+
+
+6. The DC looks up the username and corresponding password hash in the NTDS database, and uses it to encrypt the challenge.
+
+
+7. The DC compares the encrypted challenge with the response computed by the client. Authentication is successful if both are identical.
+
+
+8. The server returns a STATUS SUCCESS message in a session setup response.
+
+The Net-NTLMv1 Encryption Algorithm
+
+
+C = 8-byte server challenge, random
+K1 | K2 | K3 = LM/NT-hash | 5-bytes-0
+response = DES(K1,C) | DES(K2,C) | DES(K3,C)
+
+The challenge length is eight bytes long and the response is 24 bytes long.
+
+
+The NT-Hash (16 bytes) is divided into three different 7-byte chunks
+
+K1: NT-Hash Bytes 1 to 7
+K2: NT-Hash Bytes 8 to 14
+K3: NT-Hash Bytes 15 to 16, with five bytes of padded zeros
+
+
+Each chunk is then used as the Cipher Key to encrypt the 8-byte challenge using DES. Once each chunk has been encrypted, they are concatenated in order and form the 24-byte Net-NTLMv1 proof string.
+
+
+The Net-NTLMv1 Proof String cannot be used directly to pass the hash — like when the LM hash is sniffed from the network — but it can be cracked or relayed.
+
+
+Since the challenge is variable, one cannot use rainbow tables against a Net-NTLMv1 proof string. Although, the password can be cracked by brute-forcing password hashes against the string, since the challenge plaintext is also known from sniffed traffic.
+
+Why Net-NTLMv1 is Unsafe
+
+
+The problem lies in the challenge and in the way it is encrypted by the client.
+
+The challenge used by Net-NTLMv1 is always an 8-byte random number.
+The protocol uses DES, which is designed to be very fast, but can be also decrypted very quickly.
+The three concatenated parts of the client response can be attacked separately to find the chunks of the NT hash, and of those chunks, the third can be used as an oracle since it is always padded with five zeroes.
+
+Windows Authentication Network Protocols | Net-NTLMv2
+Net-NTLMv2 is the more advanced and secure version of the Net-NTLMv1 protocol but is deprecated. The concept is the same as Net-NTLMv1, but this protocol employs a different algorithm and includes additional data in the client response. This protocol has been used by default in Windows OSs since Windows 2000. 
+
+The Authentication Process
+
+
+The authentication steps in Net-NTLMv2 are identical to Net-NTLMv1, except the challenge/response generation algorithm and the challenge length differ. In Net-NTLMv2, the entire server challenge length is variable instead of the fixed 16-bytes used in Net-NTLMv1.
+
+
+In Net-NTLMv2, any parameters that are added by the client such as client nonce/challenge, server challenge, timestamp, or username are hashed, which is why the length of Net-NTLMv2 challenges varies from one user or session to another.
+
+
+Net-NTLMv2 responses cannot be used for a PtH attack, due to the security improvements, but they can still be relayed or cracked. The process of cracking a user’s original NT-Hash may take some time, but it is possible.
+
+The Net-NTLMv2 Algorithm
+
+HMAC: A cryptographic technique that uses a pre-shared key, also known as a secret, and a defined hashing algorithm to create a well-padded double-hashed hash.
+HMAC-MD5: A cryptographic technique that uses MD5 as the hashing algorithm.
+
+The response is created by concatenating the results of LMv2, Client Challenge (CC), NTv2, and Variable Challenge Components (CC*).
+
+
+In order to create the LMv2 and NTv2 responses, the client generates a ResponseKey for this specific exchange by generating an HMAC-MD5 hash of the user’s NT-Hash, Username, and Domain.
+
+
+LMv2 is a 24-byte hash created by concatenation of an HMAC-MD5 16-byte hash and an 8-byte CC. The HMAC-MD5 hash is generated through the concatenation of the following values:
+
+An 8-byte Server Challenge (SC)
+An 8-byte CC
+An HMAC-MD5 hash (v2-Hash) of the user's NTLM-Hash, username, and domain name. 
+
+CC follows the LMv2 hash, which is just the 8-byte CC.
+
+
+NTv2, known as the NT Proof String, is the HMAC-MD5 of the following Items:
+Response Key
+The 8-byte SC
+The variable components of the challenge response, which include
+        Current time in NT time format   
+        An 8-byte random value - Client Challenge (CC)
+        Server name
+        Other system information
+
+
+This NTv2 hash is then followed by the items that were hashed (CC*). 
+
+
+This process of forming the entire response is summarized below.
+
+
+SC = 8-byte server challenge, random
+CC = 8-byte client challenge, random
+CC* = (time, CC, server name, systeminfo)
+ResponseKey = HMAC-MD5(NT-Hash, username, domain name)
+LMv2 = HMAC-MD5(ResponseKey, SC, CC)
+NTv2 = HMAC-MD5(ResponseKey, SC, CC*)
+response = LMv2 | CC | NTv2 | CC*
 
 
 
+This protocol algorithm is defined in Microsoft official documentation: [MS-NLMP]: NTLM v2 Authentication.
 
 
+Windows Authentication Network Protocols | Kerberos
+Kerberos is the modern Windows authentication protocol. It is — as authentication protocols go — very old, with the first publicly available version published in 1988. With improvements and updates, it exists as the most secure form of modern Windows Authentication mechanisms available when properly configured and implemented.
+Kerberos allows principals, which are client devices or user identities, to gain federated access to networked resources in a trusted environment — also known as a Kerberos realm.
+In an AD domain, which normally encompasses the entire realm, the user account that performs the actions of the Key Distribution Center (KDC) is KRBTGT. This account delivers two services to the realm — the Authentication Service (AS) and the Ticket Granting Service (TGS). The AS is responsible for validating the identity of all principals. The TGS is responsible for granting access to domain services and resources requested by authenticated principals.
+TRAINEE GUIDE A-531-4426
+CUI
+1856
+CUI
+The Kerberos protocol conducts authentication to those services and resources in the following steps:
+• The principal requests authentication to the KDC with an Authentication Service Request (AS-REQ).
+○ In this request, the principal includes its own identity as a client name (cname_string).
+• The KDC AS validates the principal’s identity and responds with a Authentication Service Response (AS-REP).
+○ In this response, the KDC AS encrypts the session key to be used in the TGS exchange with the principal’s NT-Hash.
+○ The KDC AS also encrypts the session key with the KRBTGT NT-Hash. This encrypted message is the TGT.
+○ The Key Distribution Service (KDS) AS sends both the encrypted session key and TGT to the principal in the AS-REP.
+• The principal generates a request to the KDC for access to a specific service with a Ticket Granting Service Request (TGS-REQ).
+○ The principal encrypts its own identity with the session key decrypted from the AS-REP. This message is the Authenticator.
+○ The principal sends the TGT received from the AS-REP and the Authenticator in the TGS-REQ.
+• The KDC TGS validates the principal’s TGT; responds with a Ticket Granting Service Response (TGS-REP).
+○ The session key is decrypted from the TGT using the KRBTGT NT-Hash.
+○ If the identity decrypted from the Authenticator matches the cname_string that the principal used in the TGS-REQ, then the TGS considers the request valid.
+○ The KDC TGS encrypts the session key for the requested service exchange using the current session key.
+○ The KDC TGS encrypts the session key for the requested service exchange using that service’s NT-Hash. This encrypted message is the Service Ticket.
+○ The KDC TGS sends both the Service Ticket and the encrypted session key.
+• The principal generates an access request to a specific service with a Service Authentication Protocol Request (AP-REQ).
+○ The principal encrypts its own identity with the session key decrypted from the TGS-REP. This message is the Authenticator.
+○ The principal sends the Service Ticket received from the TGS-REP and the Authenticator in the AP-REQ.
+TRAINEE GUIDE A-531-4426
+CUI
+1857
+CUI
+• The service validates the principal’s service ticket; responds with a Service Authentication Protocol Response (AP-REP).
+○ The session key is decrypted from the Service Ticket using the service’s own NT-Hash.
+○ If the identity decrypted from the Authenticator matches the cname_string that the principal used in the AP-REQ, then the service considers the request valid.
+○ The service responds to the principal confirming access to the service.
 
 
+  group policy managment
+        cda.corp is liked to domain start at the top and show all for each gpo
+        
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+no auditing means it set for no auditing no that its not set
+lsp local security policy
+tr
 
 
 
