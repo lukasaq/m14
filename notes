@@ -40,18 +40,65 @@ The next step in the investigation needs to dive into the data of the 25 occurre
 To determine the accounts that experienced modifications, adjust the current visualization. Aggregate based on the field winlog.event_data.ObjectDN.keyword.
 
 
+########## mod 14 lesson 2 ###############
+######### Domain Services ##########
+
+LDAP also defines:
+Permissions: These are set by an administrator to allow certain people to access the LDAP database and keep certain data private.Schema: Describes the format and attributes of data on the server. A schema entered in an LDAP server might define a groovyPerson entry type, which has attributes of directMessageAddress and waterFlavorPreference. The standard attributes of name, email address, etc., are inherited from one of the standard schemas, which are rooted in X.500. 
+
+LDAP is traditionally used in medium-to-large organi­zations. 
 
 
 
+LDAP Settings
+In this portion of the lesson, walk through the settings pertaining to LDAP, specifically the settings to enable improved protection for the domain against potential Malicious Cyberspace Activity (MCA). 
+
+﻿
+
+LDAP Binding
+﻿
+Bind operations serve multiple purposes including:
+
+Providing directory server authentication for clients; includes the users or applications behind the clients.
+Establishing an authorization identity for subsequent operations processed via the connection.
+Specifying the client’s LDAP protocol version.
+Authentication typically consists of two parts: identifying the need for authentication, and providing proof of identity — a password, a certificate, a hardware/software token, and/or biometric information. There may be additional steps (e.g., checking password policy state or other constraints) that must be completed prior to successfully binding.
+
+﻿
+
+LDAP bind requests use either simple or Simple Authentication and Security Layer (SASL) authentication. In simple authentication, the authenticated account is identified by the entry’s Distinguished Name (DN) for the account, and a password is used as the identity proof. Since the password is not obfuscated when transmitted, the use of an encrypted connection (e.g., secured by Secure Sockets Layer [SSL]/Transport Layer Security [TLS] or StartTLS) is strongly recommended. Providing an empty string as the bind DN and password works for an anonymous simple bind. While the Lightweight Directory Access Protocol version 3 (LDAPv3) specification states only the password needs to be empty, this has led to multiple security issues. Given this, most servers request an empty DN if using the empty password.
+
+﻿
+
+An LDAP bind request is comprised of three elements:
+
+The client’s desired LDAP protocol version. Version 3 is the most current, however, older clients may use version 2. Any newly created application should be developed for version 3.
+The user’s DN for authentication. Leave this empty for anonymous simple authentication; it is usually empty for SASL authentication, too. For non-anonymous simple authentication, it must be populated.
+The user’s credentials for authentication. The password for the user specified by the bind DN is required for simple authentication; this may be empty for anonymous binds. SASL authentication expects an encoded value containing the SASL mechanism name and a set of encoded SASL credentials (optional).
+﻿
 
 
+After making the configuration change, clients often find their binds cease working if they are relying on unsigned SASL LDAP binds or on LDAP simple binds over a non-SSL/TLS connection. To assist in identifying these clients, the AD DS or Lightweight Directory Server (LDS) directory server logs a summary event Identifier (ID) 2887 once every 24 hours, which indicates how many such binds occurred. It is recommended to configure these clients not to use such binds. After these events cease for an extended period, configure the server to reject such binds in the future.
 
 
+Configure the directory server to provide more detailed logs, if more information is required to identify such clients. An event ID 2889 is logged when a client attempts an unsigned LDAP bind. The log entry captures the IP address and identity that tried to authenticate. Setting the 16 LDAP interface events diagnostic setting to 2 (Basic) enables the logging.
 
 
+The directory server logs a summary event ID 2888 once every 24 hours when a rejected unsigned SASL LDAP bind or LDAP simple bind over a non-SSL/TLS connection occurs.
 
 
+DCSync is a credential dumping technique leading to the compromise of user credentials, and a prelude to the creation of a Golden Ticket — DCSync compromises the Kerberos Ticket Generating Ticket Account (KRBTGT) password. The KRBTGT is a hidden account that encrypts all authentication tokens for the DC. The Golden Ticket is the KRBTGT account’s Kerberos authentication token. The Golden Ticket can use a Pass-the-Hash technique to log into any account, allowing attackers to move around the network unnoticed.
 
+
+DCSync attacks occur when an adversary compromises a user’s Replicating Directory Changes All and Replicating Directory Changes privileges — administrators, domain administrators, enterprise administrators, and DC groups have these privileges by default. If necessary, any user can be granted these specific privileges. Once obtained, an adversary replicates data (including credentials) from AD using the Directory Replication Service (DRS) remote protocol.
+
+
+In addition to DCs, some applications (such as Azure Active Directory Connect) have legitimate requirements for replication permissions. These applications are often targets for adversaries because of the requirements.
+
+
+Protecting an organization from a Golden Ticket attack is no different than from any other malware or infiltration attack. Since an attacker requires privileged access to create the Golden Ticket, the more difficult it is for them to steal credentials, the better protected the organization is. Follow these procedures to help defend from a Golden Ticket attack:
+Train users to recognize and avoid bad linksEnforce a least privilege modelLimit user access to only what they needLimit administrator and domain administrator accessUse administrator accounts sparingly and only for approved changes
+Install endpoint protection to block attackers from loading modules like MimikatzCreate a choke point for access to the DCs, adding another layer of protectionCreate a terminal server that can only talk to the DCsConfigure the DCs to only accept administrative connections from that terminal serverMonitor file activity and user behaviorAlert on known behavior that indicates Golden Ticket attacks
 
 
 
